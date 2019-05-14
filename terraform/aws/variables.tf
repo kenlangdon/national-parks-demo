@@ -14,8 +14,8 @@ variable "aws_centos_image_user" {
   default = "centos"
 }
 
-variable "aws_image_user" {
-  default = "ubuntu"
+variable "aws_ami_user" {
+  default = "centos"
 }
 
 variable "aws_amazon_image_user" {
@@ -85,3 +85,14 @@ variable "count" {
 }
 
 variable "origin" {}
+
+
+variable "group" {
+  default = "default"
+}
+
+variable "update_strategy" {
+  default = "at-once"
+}
+
+

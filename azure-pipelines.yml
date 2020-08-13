@@ -65,7 +65,7 @@ stages:
               HAB_LICENSE: accept-no-persist
           - script: |
               /tmp/hab license accept
-              sudo /tmp/hab pkg export container $(Build.SourcesDirectory)/results/*.hart
+              sudo /tmp/hab pkg export container $(Pipeline.Workspace)/hart/$(pkg_artifact)
             displayName: 'Export to Docker'
 
 - stage: Promote_Stg

@@ -63,6 +63,10 @@ stages:
               habitatPackageChannel: dev
             env:
               HAB_LICENSE: accept-no-persist
+          - script: |
+              /tmp/hab license accept
+              sudo /tmp/hab pkg export container $(Pipeline.Workspace)/hart/$(pkg_artifact)
+            displayName: 'Export to Docker'
 
 - stage: Promote_Stg
   jobs:

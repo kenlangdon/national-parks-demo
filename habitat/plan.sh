@@ -1,14 +1,8 @@
 pkg_name=national-parks
 pkg_description="A sample JavaEE Web app deployed in the Tomcat8 package"
-<<<<<<< HEAD
 pkg_origin=ken
 pkg_version=7.0.0
 pkg_maintainer="Ken Langdon <klangdon@chef.io>"
-=======
-pkg_origin=ericheiser
-pkg_version=7.0.0
-pkg_maintainer="Eric Heiser <eheiser@chef.io>"
->>>>>>> upstream/master
 pkg_license=('Apache-2.0')
 pkg_deps=(core/tomcat8 core/corretto/11.0.2.9.3 core/mongo-tools)
 pkg_build_deps=(core/corretto/11.0.2.9.3 core/maven)

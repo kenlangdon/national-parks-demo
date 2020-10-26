@@ -1,9 +1,5 @@
 trigger:
-<<<<<<< HEAD
-- Master
-=======
 - chef-docker-webinar
->>>>>>> upstream/master
 
 stages:
 
@@ -13,11 +9,7 @@ stages:
     pool:
       # If you are building a Windows package, you'll need to swap this to a windows image.
       # name: Hosted VS2017
-<<<<<<< HEAD
-      vmImage: 'ubuntu-latest'
-=======
       vmImage: 'ubuntu-18.04'
->>>>>>> upstream/master
     steps:
     - task: vsts-habitat-install@3
       displayName: 'Install Habitat'
@@ -25,19 +17,11 @@ stages:
     - task: vsts-habitat-signing-key@3
       displayName: 'Signing Origin Key: install'
       inputs:
-<<<<<<< HEAD
-        habitatOrigin: Habitat Depot
-
-    - task: vsts-habitat-build@3
-      inputs:
-        habitatOrigin: Habitat Depot
-=======
         habitatOrigin: bldr
 
     - task: vsts-habitat-build@3
       inputs:
         habitatOrigin: bldr
->>>>>>> upstream/master
         habitatSrcPath: '$(Build.SourcesDirectory)'
         habitatPlanContext: 'habitat'
       env:
@@ -55,11 +39,7 @@ stages:
   jobs:
   - deployment: plan
     pool:
-<<<<<<< HEAD
-      vmImage: 'ubuntu-latest'
-=======
       vmImage: 'ubuntu-18.04'
->>>>>>> upstream/master
     environment: 'dev'
     strategy:
       runOnce:
@@ -70,11 +50,7 @@ stages:
           - task: vsts-habitat-signing-key@3
             displayName: 'Signing Origin Key: install'
             inputs:
-<<<<<<< HEAD
-              habitatOrigin: Habitat Depot
-=======
               habitatOrigin: bldr
->>>>>>> upstream/master
           - script: |
               source $(Pipeline.Workspace)/hart/last_build.env
               echo "##vso[task.setvariable variable=pkg_artifact]$pkg_artifact"
@@ -82,32 +58,17 @@ stages:
           - task: vsts-habitat-pkg-upload@3
             displayName: 'Package Upload'
             inputs:
-<<<<<<< HEAD
-              habitatOrigin: Habitat Depot
-=======
               habitatOrigin: bldr
->>>>>>> upstream/master
               habitatPackagePath: '$(Pipeline.Workspace)/hart/$(pkg_artifact)'
               habitatPackageChannel: dev
             env:
               HAB_LICENSE: accept-no-persist
-<<<<<<< HEAD
-          - script: |
-              /tmp/hab license accept
-              sudo /tmp/hab pkg export container $(Pipeline.Workspace)/hart/$(pkg_artifact)
-            displayName: 'Export to Docker'
-=======
->>>>>>> upstream/master
 
 - stage: Promote_Stg
   jobs:
   - deployment: plan
     pool:
-<<<<<<< HEAD
-      vmImage: 'ubuntu-latest'
-=======
       vmImage: 'ubuntu-18.04'
->>>>>>> upstream/master
     environment: 'stg'
     strategy:
       runOnce:
@@ -118,11 +79,7 @@ stages:
           - task: vsts-habitat-signing-key@3
             displayName: 'Signing Origin Key: install'
             inputs:
-<<<<<<< HEAD
-              habitatOrigin: Habitat Depot
-=======
               habitatOrigin: bldr
->>>>>>> upstream/master
           - script: |
               source $(Pipeline.Workspace)/hart/last_build.env
               /tmp/hab pkg promote $pkg_ident stage
@@ -134,11 +91,7 @@ stages:
   jobs:
   - deployment: plan
     pool:
-<<<<<<< HEAD
-      vmImage: 'ubuntu-latest'
-=======
       vmImage: 'ubuntu-18.04'
->>>>>>> upstream/master
     environment: 'prod'
     strategy:
       runOnce:
@@ -149,11 +102,7 @@ stages:
           - task: vsts-habitat-signing-key@3
             displayName: 'Signing Origin Key: install'
             inputs:
-<<<<<<< HEAD
-              habitatOrigin: Habitat Depot
-=======
               habitatOrigin: bldr
->>>>>>> upstream/master
           - script: |
               source $(Pipeline.Workspace)/hart/last_build.env
               /tmp/hab pkg promote $pkg_ident prod

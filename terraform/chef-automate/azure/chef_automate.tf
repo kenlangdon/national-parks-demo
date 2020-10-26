@@ -24,15 +24,19 @@ locals {
   ip_conf_name = "automate-ipconfig"
 }
 
+resource "azurerm_subnet_network_security_group_association" "automate" {
+  subnet_id                 = azurerm_subnet.frontend.id
+  network_security_group_id = azurerm_network_security_group.chef_automate.id
+}
+
 resource "azurerm_network_interface" "automate_nic" {
   name                      = "chef-automate-${random_id.instance_id.hex}-nic"
   location                  = azurerm_resource_group.rg.location
   resource_group_name       = azurerm_resource_group.rg.name
-  network_security_group_id = azurerm_network_security_group.chef_automate.id
 
   ip_configuration {
     name                          = local.ip_conf_name
-    subnet_id                     = azurerm_subnet.backend.id
+    subnet_id                     = azurerm_subnet.frontend.id
     private_ip_address_allocation = "dynamic"
     public_ip_address_id          = azurerm_public_ip.automate_pip.id
   }
@@ -59,6 +63,16 @@ data "template_file" "install_chef_automate_cli" {
   )
 }
 
+data "template_file" "set_chef_automate_token" {
+  template = file(
+    "${path.module}/templates/chef_automate/set_chef_automate_token.sh.tpl",
+  )
+
+  vars = {
+    automate_token = var.automate_token
+  }
+}
+
 locals {
   full_cert_chain = "${acme_certificate.automate_cert.certificate_pem}${acme_certificate.automate_cert.issuer_pem}"
 }
@@ -73,7 +87,7 @@ resource "azurerm_virtual_machine" "chef_automate" {
   delete_os_disk_on_termination = true
 
   connection {
-    host        = "" # TF-UPGRADE-TODO: Set this to the IP address of the machine's primary network interface
+    host        = "${azurerm_dns_a_record.automate_dns.name}.${var.automate_app_gateway_dns_zone}"
     type        = "ssh"
     user        = var.azure_image_user
     private_key = file(var.azure_private_key_path)
@@ -88,10 +102,10 @@ resource "azurerm_virtual_machine" "chef_automate" {
 
   storage_os_disk {
     name          = "${var.automate_hostname}-fe-${random_id.randomId.hex}-osdisk"
-    vhd_uri       = "${azurerm_storage_account.stor.primary_blob_endpoint}${azurerm_storage_container.storcont.name}/${var.tag_application}-chef_automate-osdisk.vhd"
     caching       = "ReadWrite"
     create_option = "FromImage"
     disk_size_gb  = "100"
+    managed_disk_type = "Standard_LRS"
   }
 
   os_profile {
@@ -120,6 +134,11 @@ resource "azurerm_virtual_machine" "chef_automate" {
   }
 
   provisioner "file" {
+    destination = "/tmp/set_chef_automate_token.sh"
+    content     = data.template_file.set_chef_automate_token.rendered
+  }
+
+  provisioner "file" {
     destination = "/tmp/ssl_cert"
     content     = var.automate_custom_ssl ? var.automate_custom_ssl_cert_chain : local.full_cert_chain
   }
@@ -142,13 +161,14 @@ resource "azurerm_virtual_machine" "chef_automate" {
       "sudo sed -i 's/license = \".*\"/license = \"${var.automate_license}\"/g' /tmp/config.toml",
       "sudo rm -f /tmp/ssl_cert /tmp/ssl_key",
       "sudo mv /tmp/config.toml /etc/chef-automate/config.toml",
-      "sudo ./chef-automate deploy /etc/chef-automate/config.toml --accept-terms-and-mlsa",
-      "sudo ./chef-automate applications enable",
-      "sudo hab pkg install chef/applications-service -b",
+      "sudo ./chef-automate deploy ${var.automate_products} /etc/chef-automate/config.toml --accept-terms-and-mlsa",
       "sleep 60",
       "sudo chown ${var.azure_image_user}:${var.azure_image_user} $HOME/automate-credentials.toml",
-      "sudo echo -e api-token = \"$(sudo chef-automate admin-token)\" >> $HOME/automate-credentials.toml",
+      "sudo echo -e api-token = \"$(sudo chef-automate iam token create admin --admin)\" >> $HOME/automate-credentials.toml",
       "sudo cat $HOME/automate-credentials.toml",
+      "sudo chef-automate iam admin-access restore ${var.automate_password}",
+      "sudo chmod +x /tmp/set_chef_automate_token.sh",
+      "sudo bash /tmp/set_chef_automate_token.sh",
     ]
   }
 
